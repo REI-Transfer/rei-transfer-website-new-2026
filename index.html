@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIND Real Estate Clone — Playground</title>
+    <meta name="description" content="Clone of findrealestate.com for design study">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== BASE (10px root for rem math like the original) ===== */
+        html { font-size: 62.5%; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.6rem;
+            line-height: 1.5;
+            color: #151717;
+            background: #fff;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        a { color: inherit; text-decoration: none; }
+        img { max-width: 100%; height: auto; display: block; }
+        button { font-family: inherit; cursor: pointer; border: none; background: none; }
+        .em { color: rgba(21,23,23,0.5); }
+
+        /* ===== CONTAINER ===== */
+        .container { padding: 0 2.5rem; margin: 0 auto; max-width: 1920px; }
+        @media(min-width:768px) { .container { padding: 0 10rem; } }
+
+        /* ===== LOADING LINE ===== */
+        .loading-line {
+            position: fixed; top: 0; left: 0; width: 100%; height: 0.45rem;
+            background: hsla(0,0%,100%,0.1); z-index: 9999;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: sticky; top: 0; left: 0; right: 0; z-index: 50;
+            background-color: #fff;
+            transition: background-color 0.3s, transform 0.3s ease-in-out;
+        }
+        .header.transparent:not(.fixed) { background-color: transparent; }
+        .header.hidden { transform: translateY(-100%); }
+        .header-content {
+            min-height: 8.4rem; position: relative;
+            display: grid; grid-template-columns: 1fr auto;
+            align-items: center; z-index: 50;
+            transition: background-color 1s ease-in-out, color 1s ease-in-out;
+        }
+        @media(min-width:768px) {
+            .header-content { min-height: 7.8rem; grid-template-columns: 25rem 1fr 25rem; }
+        }
+        .header-logo { display: flex; align-items: center; }
+        .header-logo svg { width: 9.1rem; height: 2.6rem; }
+        .header-nav { display: none; margin: auto; }
+        @media(min-width:768px) { .header-nav { display: flex; gap: 4rem; } }
+        .header-nav a {
+            font-weight: 500; font-size: 2rem; line-height: 1.25;
+            cursor: pointer; display: flex; align-items: center; gap: 1rem;
+            overflow: hidden;
+        }
+        .header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 2rem; }
+
+        /* Transparent header = white text */
+        .header.transparent:not(.fixed) .header-content { color: #fff; }
+        .header.transparent:not(.fixed) .btn-round.primary { background: #fff; color: #151717; }
+
+        /* ===== BUTTONS ===== */
+        .btn-round {
+            display: inline-flex; align-items: center; justify-content: center; gap: 1.4rem;
+            border-radius: 100px; padding: 1.4rem 2.4rem;
+            font-size: 1.6rem; font-weight: 500; line-height: 1.5;
+            border: 1px solid transparent; cursor: pointer;
+            transition: transform 0.3s;
+            overflow: hidden; position: relative;
+        }
+        @media(min-width:768px) { .btn-round { font-size: 1.8rem; line-height: 1.4; padding: 1.54rem 3rem; } }
+        .btn-round:hover { transform: scaleX(1.02); transition: transform 0.7s cubic-bezier(0.34,3.56,0.64,1); }
+        .btn-round.primary { background-color: #151717; color: #fff; }
+        .btn-round.secondary { background-color: #fff; color: #151717; }
+        .btn-round svg { width: 2.4rem; height: 2.4rem; flex-shrink: 0; }
+
+        /* Button text hover slide effect */
+        .btn-text { overflow: hidden; }
+        .btn-text span {
+            position: relative; display: block;
+            transition: transform 0.9s cubic-bezier(0.16,1,0.3,1);
+        }
+        .btn-text span::after {
+            content: attr(data-text); display: block;
+            position: absolute; top: 105%; left: 0; right: 0;
+        }
+        .btn-round:hover .btn-text span { transform: translateY(-105%); }
+
+        /* ===== BURGER BUTTON ===== */
+        .burger-btn {
+            display: block; width: 3rem; height: 3rem;
+            -webkit-tap-highlight-color: transparent;
+            position: relative; background: none; border: none; padding: 0;
+        }
+        @media(min-width:768px) { .burger-btn { display: none; } }
+        .burger-btn span {
+            display: block; width: 100%; height: 2px;
+            margin: 0.8rem 0; background: currentColor;
+            border-radius: 9999px;
+            transition: top 0.2s 0.3s, transform 0.3s 0s;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative; height: 350vh; margin-bottom: -100vh;
+        }
+        @media(min-width:768px) { .hero { height: 500vh; } }
+        .hero:first-child { margin-top: -8.4rem; }
+        @media(min-width:768px) { .hero:first-child { margin-top: -9.8rem; } }
+
+        .hero-top { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+        .hero-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; }
+        .hero-back { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+        .hero-back img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+        .hero-back::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 1;
+        }
+
+        .hero-house {
+            position: absolute; z-index: 1;
+            left: 0; right: 0;
+            top: 0; bottom: 0;
+            transform-origin: bottom center;
+            pointer-events: none;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%);
+        }
+        .hero-house img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center bottom;
+        }
+
+        .hero-big-logo {
+            position: absolute; z-index: 1;
+            top: 50%; left: 50%; transform: translate(-50%, -60%);
+            width: 70%; max-width: 80rem;
+            opacity: 0; pointer-events: none;
+        }
+        @media(min-width:768px) { .hero-big-logo { width: 50%; } }
+        .hero-big-logo img { width: 100%; height: auto; filter: brightness(0) invert(1); opacity: 0.6; }
+
+        /* duplicate removed — hero-house styled above */
+
+        .hero-clouds { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; }
+        .hero-cloud { position: absolute; z-index: 2; }
+        .hero-cloud:first-child { top: 33.7rem; left: -57.2rem; width: 70.2rem; height: 29.8rem; }
+        @media(min-width:768px) { .hero-cloud:first-child { top: 25%; left: -33.72rem; width: 112.4rem; height: 47.7rem; } }
+        .hero-cloud:last-child { top: 37.12rem; right: -41.2rem; width: 55.7rem; height: 23.6rem; }
+        @media(min-width:768px) { .hero-cloud:last-child { top: 20%; right: -33.72rem; width: 93.6rem; height: 39.7rem; } }
+        .hero-cloud img { width: 100%; height: 100%; object-fit: cover; }
+
+        .hero-logo-svg {
+            position: absolute; z-index: 1; opacity: 0;
+            top: calc(50% - 5.1rem); left: calc(50% - 11.75rem);
+            width: 23.5rem; height: 10.2rem;
+        }
+        @media(min-width:768px) {
+            .hero-logo-svg { top: calc(50% - 21.15rem); left: calc(50% - 48.85rem); width: 97.7rem; height: 42.3rem; }
+        }
+        .hero-logo-svg svg { width: 100%; height: 100%; overflow: visible; }
+        .hero-logo-svg path { fill: rgba(0,0,0,0); stroke: #fff; stroke-width: 3px; }
+        @media(min-width:768px) { .hero-logo-svg path { stroke-width: 2px; } }
+
+        .hero-smoke {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            height: 45rem; z-index: 3;
+        }
+        @media(min-width:768px) { .hero-smoke { height: 62rem; } }
+        .hero-top .hero-smoke { transform: translateY(70%); }
+        .hero-smoke img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+
+        .hero-content {
+            position: relative; z-index: 7; display: grid; align-items: center;
+            height: 100%; padding-bottom: 15rem;
+        }
+        @media(min-width:768px) { .hero-content { padding-bottom: 22.8rem; } }
+
+        .hero-title h1 {
+            font-weight: 700; font-size: 5.4rem;
+            line-height: 100%; letter-spacing: -0.02em; text-align: center;
+            color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+        @media(min-width:768px) { .hero-title h1 { font-size: 14rem; } }
+
+        .hero-text {
+            margin: 1.5rem 0 0; font-weight: 500; font-size: 1.6rem;
+            line-height: 150%; text-align: center; text-wrap: balance;
+            color: rgba(255,255,255,0.9); text-shadow: 0 1px 12px rgba(0,0,0,0.5);
+        }
+        .hero-text .em { color: rgba(255,255,255,0.65); }
+        @media(min-width:768px) {
+            .hero-text { margin: 2rem 0 0; font-size: 3.2rem; line-height: 130%; letter-spacing: -0.01em; }
+        }
+
+        .hero-actions { margin: 3rem 0 0; display: flex; justify-content: center; }
+
+        .hero-overlap {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 100vh; pointer-events: none;
+        }
+        .hero-overlay {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            height: 10rem; z-index: 3;
+            background: linear-gradient(180deg, rgba(255,255,255,0), #fff);
+        }
+        @media(min-width:768px) { .hero-overlay { height: 30.9rem; } }
+
+        /* ===== WHY US ===== */
+        .why-us { position: relative; padding: 6rem 0; background: #fff; }
+        @media(min-width:768px) { .why-us { padding: 15rem 0; } }
+        .why-us-grid { display: grid; margin: 0 0 6rem; }
+        @media(min-width:768px) { .why-us-grid { grid-template-columns: auto 97.6rem; margin: 0 0 10rem; } }
+        .why-us-title { font-weight: 600; font-size: 2rem; line-height: 140%; }
+        .why-us-text { font-weight: 500; font-size: 3rem; line-height: 115%; letter-spacing: -0.01em; }
+        @media(min-width:768px) { .why-us-text { font-size: 5.6rem; letter-spacing: -0.03em; } }
+        .why-us-video { margin: 0 -2rem; aspect-ratio: 365/450; }
+        @media(min-width:768px) { .why-us-video { margin: 0; aspect-ratio: auto; height: 97.6rem; } }
+        .why-us-video video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* ===== ARROWS SECTION ===== */
+        .arrows-section { padding: 4rem 0; }
+        @media(min-width:768px) { .arrows-section { padding: 15rem 0; } }
+        .arrows-title {
+            display: flex; justify-content: center; margin: 0 0 4rem;
+            font-weight: 500; font-size: 4.4rem; line-height: 105%; letter-spacing: -0.02em;
+        }
+        @media(min-width:768px) {
+            .arrows-title { margin: 0 auto 8rem; font-size: 7.2rem; line-height: 100%; letter-spacing: -0.04em; text-align: center; }
+        }
+        .arrows-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6rem; }
+        @media(max-width:767px) { .arrows-grid { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; } }
+        .arrow-card { overflow: hidden; }
+        .arrow-card img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 692/880; }
+        .arrows-text {
+            margin: 4rem 0 0; font-weight: 500; font-size: 3rem;
+            line-height: 115%; letter-spacing: -0.01em;
+        }
+        @media(min-width:768px) { .arrows-text { margin: 8rem 0 0; font-size: 5.6rem; letter-spacing: -0.03em; } }
+
+        /* ===== REWIRED SECTION ===== */
+        .rewired { padding: 4rem 0; }
+        @media(min-width:768px) { .rewired { padding: 15rem 0; } }
+        .rewired-row { display: flex; flex-direction: column; gap: 4rem; }
+        @media(min-width:768px) { .rewired-row { flex-direction: row; } }
+        .rewired-row .col:first-child { flex: 1 1; }
+        .rewired-row .col:nth-child(2) { flex-shrink: 0; display: flex; flex-direction: column; gap: 4rem; }
+        @media(min-width:768px) { .rewired-row .col:nth-child(2) { flex-basis: 97.6rem; gap: 8rem; } }
+        .rewired-title { font-weight: 500; font-size: 4.4rem; line-height: 1; letter-spacing: -0.02em; }
+        @media(min-width:768px) { .rewired-title { font-size: 7.2rem; letter-spacing: -0.04em; } }
+        .rewired-label { font-weight: 500; font-size: 2.2rem; line-height: 1.15; margin-bottom: 3rem; }
+        @media(min-width:768px) { .rewired-label { font-size: 3.2rem; line-height: 1.3; letter-spacing: -0.01em; } }
+        .rewired-list { list-style: none; }
+        .rewired-item {
+            border-bottom: 1px solid rgba(21,23,23,0.07); padding: 3rem 0;
+            font-weight: 500; font-size: 2.2rem; line-height: 1.15;
+        }
+        .rewired-item:first-child { border-top: 1px solid rgba(21,23,23,0.07); }
+        .rewired-item::before {
+            content: attr(data-index); font-size: 1.4rem; font-weight: 500;
+            line-height: 1.5; color: #b3b3b3; margin-bottom: 3rem; display: block;
+        }
+        @media(min-width:768px) {
+            .rewired-item::before { margin-bottom: 0; font-size: 2rem; }
+            .rewired-item {
+                font-size: 4.4rem; line-height: 1.15; letter-spacing: -0.03em;
+                display: flex; align-items: center; gap: 5rem;
+            }
+        }
+
+        /* ===== FOOTER (simple) ===== */
+        .site-footer {
+            padding: 6rem 0; border-top: 1px solid rgba(21,23,23,0.07);
+            text-align: center; font-size: 1.4rem; color: #b3b3b3;
+        }
+        .site-footer p { margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+
+    <!-- LOADING LINE -->
+    <div class="loading-line"></div>
+
+    <!-- HEADER -->
+    <header class="header transparent">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-logo">
+                    <a href="/"><img src="images/logo.png" alt="REI Transfer" style="height:3.2rem; width:auto; filter:brightness(0) invert(1);"></a>
+                </div>
+                <nav class="header-nav">
+                    <a href="#how-it-works">How It Works</a>
+                    <a href="#results">Results</a>
+                    <a href="#about">About</a>
+                    <a href="#resources">Resources</a>
+                </nav>
+                <div class="header-actions">
+                    <a class="btn-round primary" href="#">
+                        <div class="btn-text"><span data-text="Book a Strategy Call">Book a Strategy Call</span></div>
+                    </a>
+                    <button class="burger-btn" aria-label="Menu">
+                        <span></span><span></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- ===== HERO ===== -->
+        <section class="hero">
+            <div class="hero-top">
+                <div class="hero-bg">
+                    <!-- Layer 1: Sky background (from FIND) -->
+                    <div class="hero-back">
+                        <img alt="" src="images/hero-back.jpg">
+                    </div>
+                    <!-- Layer 2: House cutouts that crossfade on scroll -->
+                    <div class="hero-house" id="heroCutout1" style="opacity:1;">
+                        <img alt="" src="images/cutout-1-nice.png">
+                    </div>
+                    <div class="hero-house" id="heroCutout2" style="opacity:0;">
+                        <img alt="" src="images/cutout-2-decay.png">
+                    </div>
+                    <div class="hero-house" id="heroCutout3" style="opacity:0;">
+                        <img alt="" src="images/cutout-3-flip.png">
+                    </div>
+                    <!-- Layer 3: Clouds -->
+                    <div class="hero-clouds" id="heroClouds">
+                        <div class="hero-cloud"><img alt="" src="images/cloud.png"></div>
+                        <div class="hero-cloud"><img alt="" src="images/cloud.png"></div>
+                    </div>
+                    <!-- Layer 4: Logo reveal -->
+                    <div class="hero-big-logo" id="heroBigLogo">
+                        <img src="images/logo.png" alt="">
+                    </div>
+                    <!-- Layer 5: Smoke at bottom -->
+                    <div class="hero-smoke">
+                        <img alt="" src="images/smoke.png">
+                    </div>
+                    <!-- Layer 6: Dark overlay -->
+                    <div style="position:absolute; inset:0; background:rgba(0,0,0,0.2); z-index:6;"></div>
+                </div>
+                <!-- Text content -->
+                <div class="hero-content">
+                    <div class="container">
+                        <div class="hero-title">
+                            <h1>A Seller Doesn't Just Become a Lead Overnight</h1>
+                        </div>
+                        <div class="hero-text">
+                            <p>Their journey starts months before they ever fill out a form. Your marketing should already be there.</p>
+                        </div>
+                        <div class="hero-actions">
+                            <button class="btn-round secondary">
+                                <div class="btn-text"><span data-text="Book a Strategy Call">Book a Strategy Call</span></div>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="m20.78 12.531-6.75 6.75a.75.75 0 1 1-1.06-1.061l5.47-5.47H3.75a.75.75 0 1 1 0-1.5h14.69l-5.47-5.469a.75.75 0 1 1 1.06-1.061l6.75 6.75a.75.75 0 0 1 0 1.061"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Bottom gradient fade to white -->
+            <div class="hero-overlay" style="position:absolute; bottom:0; left:0; right:0; z-index:2;"></div>
+        </section>
+
+        <!-- ===== WHY FIND ===== -->
+        <section class="why-us">
+            <div class="container">
+                <div class="why-us-grid">
+                    <div class="why-us-title"><h2>Why REI Transfer</h2></div>
+                    <div class="why-us-text">
+                        Most agencies sell you leads. We build a system that compounds. <span class="em">Pre-distress targeting, belief-shifting content, and a retargeting ecosystem that turns cold clicks into closed deals.</span>
+                    </div>
+                </div>
+                <div class="why-us-video" style="aspect-ratio:16/9;">
+                    <div id="vidalytics_embed_d0kUuw38taqSCJvs" style="width:100%;position:relative;padding-top:56.25%;"></div>
+                    <script>
+                    (function(v,i,d,a,l,y,t,c,s){y='_'+d;c=l+'loader.min.js';o=i.createElement('script');o.src=c;o.async=true;s=i.getElementsByTagName('script')[0];s.parentNode.insertBefore(o,s);o.onload=function(){vli.loadScript(l+'player.min.js',function(){if(!v[d]||!v[d]['v'+y]){return}var vec=v[d]['v'+y];t=new vec();t.run(a)})}})(window,document,'Vidalytics','vidalytics_embed_d0kUuw38taqSCJvs','https://fast.vidalytics.com/embeds/ovDx31Mm/d0kUuw38taqSCJvs/');
+                    </script>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== ARROWS ===== -->
+        <section class="arrows-section">
+            <div class="container">
+                <div class="arrows-title">
+                    <h2>This isn't just <span class="em">about real estate.</span></h2>
+                </div>
+                <div class="arrows-grid">
+                    <div class="arrow-card"><img alt="" src="https://findrealestate.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2F1.e7a1ff18.jpg&w=768&q=75" loading="lazy"></div>
+                    <div class="arrow-card"><img alt="" src="https://findrealestate.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2F2.58bf2fb8.jpg&w=768&q=75" loading="lazy"></div>
+                    <div class="arrow-card"><img alt="" src="https://findrealestate.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2F3.483e04ae.jpg&w=768&q=75" loading="lazy"></div>
+                    <div class="arrow-card"><img alt="" src="https://findrealestate.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2F4.ea5fa732.jpg&w=768&q=75" loading="lazy"></div>
+                </div>
+                <div class="arrows-text">
+                    <p>It's about identity. Progress. Getting unstuck. You're not just looking for a place. <span class="em">You're looking for alignment. That's what we help you find.</span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== REAL ESTATE REWIRED ===== -->
+        <section class="rewired">
+            <div class="container">
+                <div class="rewired-row">
+                    <div class="col">
+                        <div>
+                            <h2 class="rewired-title">
+                                <div>Real Estate,</div>
+                                <div class="em">Rewired.</div>
+                            </h2>
+                        </div>
+                        <button class="btn-round primary" style="margin-top:3rem;">
+                            <div class="btn-text"><span data-text="Learn More">Learn More</span></div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="m20.78 12.531-6.75 6.75a.75.75 0 1 1-1.06-1.061l5.47-5.47H3.75a.75.75 0 1 1 0-1.5h14.69l-5.47-5.469a.75.75 0 1 1 1.06-1.061l6.75 6.75a.75.75 0 0 1 0 1.061"></path></svg>
+                        </button>
+                    </div>
+                    <div class="col">
+                        <div>
+                            <div class="rewired-label">What we do differently</div>
+                            <ul class="rewired-list">
+                                <li class="rewired-item" data-index="01">Full-service agents who actually listen</li>
+                                <li class="rewired-item" data-index="02">Tech that simplifies, not complicates</li>
+                                <li class="rewired-item" data-index="03">Transparent process from start to close</li>
+                                <li class="rewired-item" data-index="04">Built for the way people actually buy homes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>FIND Real Estate Clone — Design Study Only</p>
+            <p>This is a playground clone for learning front-end design techniques. Not affiliated with FIND Real Estate.</p>
+        </div>
+    </footer>
+
+    <script>
+        // ===== HEADER SCROLL: transparent → solid =====
+        (function() {
+            var header = document.querySelector('.header');
+            var lastScroll = 0;
+            window.addEventListener('scroll', function() {
+                var scrollY = window.scrollY || window.pageYOffset;
+                // Add solid bg after scrolling past hero
+                if (scrollY > window.innerHeight * 0.8) {
+                    header.classList.add('fixed');
+                    header.classList.remove('transparent');
+                } else {
+                    header.classList.remove('fixed');
+                    header.classList.add('transparent');
+                }
+                // Hide on scroll down, show on scroll up
+                if (scrollY > lastScroll && scrollY > 200) {
+                    header.classList.add('hidden');
+                } else {
+                    header.classList.remove('hidden');
+                }
+                lastScroll = scrollY;
+            });
+        })();
+
+        // ===== SCROLL-DRIVEN PARALLAX + HOUSE CROSSFADE =====
+        (function() {
+            var hero = document.querySelector('.hero');
+            var cut1 = document.getElementById('heroCutout1');
+            var cut2 = document.getElementById('heroCutout2');
+            var cut3 = document.getElementById('heroCutout3');
+            var bigLogo = document.getElementById('heroBigLogo');
+            var clouds = document.querySelectorAll('.hero-cloud');
+            var smoke = document.querySelector('.hero-top .hero-smoke');
+            var heroContent = document.querySelector('.hero-content');
+            if (!hero || !cut1) return;
+
+            var ticking = false;
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(function() {
+                        var rect = hero.getBoundingClientRect();
+                        var heroHeight = hero.offsetHeight - window.innerHeight;
+                        var scrolled = -rect.top;
+                        var progress = Math.max(0, Math.min(1, scrolled / heroHeight));
+
+                        // House crossfade: nice → decay → flip
+                        if (progress < 0.30) {
+                            cut1.style.opacity = 1;
+                            cut2.style.opacity = 0;
+                            cut3.style.opacity = 0;
+                        } else if (progress < 0.45) {
+                            var f = (progress - 0.30) / 0.15;
+                            cut1.style.opacity = 1 - f;
+                            cut2.style.opacity = f;
+                            cut3.style.opacity = 0;
+                        } else if (progress < 0.65) {
+                            cut1.style.opacity = 0;
+                            cut2.style.opacity = 1;
+                            cut3.style.opacity = 0;
+                        } else if (progress < 0.80) {
+                            var f2 = (progress - 0.65) / 0.15;
+                            cut1.style.opacity = 0;
+                            cut2.style.opacity = 1 - f2;
+                            cut3.style.opacity = f2;
+                        } else {
+                            cut1.style.opacity = 0;
+                            cut2.style.opacity = 0;
+                            cut3.style.opacity = 1;
+                        }
+
+                        // House scales up as you scroll
+                        var houseScale = 1 + (progress * 0.3);
+                        cut1.style.transform = 'scale(' + houseScale + ')';
+                        cut2.style.transform = 'scale(' + houseScale + ')';
+                        cut3.style.transform = 'scale(' + houseScale + ')';
+
+                        // Clouds drift apart
+                        if (clouds.length >= 2) {
+                            clouds[0].style.transform = 'translateX(' + (-progress * 200) + 'px)';
+                            clouds[1].style.transform = 'translateX(' + (progress * 200) + 'px)';
+                        }
+
+                        // Smoke rises
+                        if (smoke) {
+                            smoke.style.transform = 'translateY(' + (70 - progress * 100) + '%)';
+                        }
+
+                        // Logo fades in behind house (20-50%), fades out (70-100%)
+                        if (bigLogo) {
+                            var logoIn = Math.max(0, Math.min(1, (progress - 0.2) * 3.3));
+                            var logoOut = progress > 0.7 ? Math.max(0, 1 - (progress - 0.7) * 3.3) : 1;
+                            bigLogo.style.opacity = logoIn * logoOut;
+                            var logoScale = 0.9 + (progress * 0.1);
+                            bigLogo.style.transform = 'translate(-50%, -60%) scale(' + logoScale + ')';
+                        }
+
+                        // Fade out hero text (0-20%)
+                        if (heroContent) {
+                            var textFade = Math.max(0, 1 - (progress * 5));
+                            heroContent.style.opacity = textFade;
+                            heroContent.style.transform = 'translateY(' + (progress * -80) + 'px)';
+                        }
+
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+        })();
+    </script>
+
+</body>
+</html>
